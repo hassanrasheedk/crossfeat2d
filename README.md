@@ -5,6 +5,9 @@ This repository contains the implementation of our novel method for matching pre
 ### Overview
 Our method introduces a matching-by-synthesis strategy, where intraoperative US images are synthesized from MR images, considering multiple MR modalities and the variability of intraoperative US. The keypoint descriptors are trained in a supervised contrastive manner to be invariant to texture changes and robust against speckle noise.
 
+The following figure illustrates our method overview:
+![Method Overview](overview_full.png)
+
 ### Key Features
 - **Texture-invariant Keypoint Descriptors**: Designed for robust matching of MR and US images.
 - **Matching-by-Synthesis**: Synthesizes US images from MR images to create a diverse training set.
@@ -41,13 +44,6 @@ To use this repository, follow these steps:
 
 4. **Evaluate the Model**:
     Evaluate the trained model on real patient data using the inference notebook.
-
-### Results
-Our method achieves an average matching precision of 80.35%, significantly outperforming existing methods.
-
-### Figures
-The following figure illustrates our method overview:
-![Method Overview](overview_full.png)
 
 ### Citation
 If you use this code in your research, please cite our paper:
