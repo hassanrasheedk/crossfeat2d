@@ -1,0 +1,21 @@
+# Data and model weights stay out of git (ReMIND must be downloaded from TCIA)
+data/
+*.pth
+*.pt
+*.nii
+*.nii.gz
+
+# Python
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+build/
+dist/
+
+# Notebooks
+.ipynb_checkpoints/
+LightGlue/
+
+.DS_Store
