@@ -61,9 +61,6 @@ data/mr_us/Case067/
 
 Synthetic images are named `<slice>-<MR contrasts>_<parameter>.png`, for example `000-t2_cet1_flair_0.5.png`; any `NNN-*.png` is used for slice `NNN`.
 
-> [!NOTE]
-> The steps that produce these PNGs, slicing the ReMIND volumes and generating synthetic US, are **not included** in this repository yet. The CLI checks the layout above and explains what is missing.
-
 ## Usage
 
 Train a patient-specific descriptor on one case's synthetic US:
