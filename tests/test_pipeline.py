@@ -12,10 +12,15 @@ from crossfeat2d.model import SiameseNetwork
 KEYPOINTS = [[50.0, 60.0], [52.0, 61.0], [100.0, 100.0], [140.0, 70.0], [5.0, 5.0]]
 
 
-class FakeExtractor:
+class FakeExtractor(torch.nn.Module):
     """Stands in for SuperPoint: returns fixed keypoints in LightGlue's batched format."""
 
+    def __init__(self):
+        super().__init__()
+        self.weight = torch.nn.Parameter(torch.zeros(1))
+
     def extract(self, image):
+        assert image.device == self.weight.device
         return {"keypoints": torch.tensor([KEYPOINTS])}
 
 

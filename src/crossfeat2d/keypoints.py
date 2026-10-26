@@ -18,7 +18,8 @@ def detect_keypoints(extractor, image: torch.Tensor) -> np.ndarray:
     """(N, 2) array of (x, y) keypoints detected on a (3, H, W) image."""
     from lightglue.utils import rbd
 
-    feats = rbd(extractor.extract(image))
+    device = next(extractor.parameters()).device
+    feats = rbd(extractor.extract(image.to(device)))
     return feats["keypoints"].cpu().numpy()
 
 

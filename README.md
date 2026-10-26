@@ -78,7 +78,7 @@ Evaluate it on the same patient's real, registered US. A match counts as correct
 crossfeat2d evaluate data/mr_us/Case067 --weights runs/case067.pth --json runs/case067.json
 ```
 
-`--matcher lightglue` (default) matches our descriptors with LightGlue's DISK weights, as in the paper's real-case evaluation; `--matcher cosine` uses nearest neighbours by cosine similarity with a ratio test. `crossfeat2d train --keypoints t2` runs the ablation that detects keypoints on the T2 slice instead of on each synthetic image. See `crossfeat2d train -h` and `crossfeat2d evaluate -h` for all options.
+`--matcher lightglue` (default) matches our descriptors with LightGlue's DISK weights, as in the paper's real-case evaluation; `--matcher cosine` uses nearest neighbours by cosine similarity with a ratio test. `crossfeat2d train --keypoints t2 --batch-size 256` runs the ablation that detects keypoints on the T2 slice instead of on each synthetic image (the ablation notebook also used only the `synthetic_us/t2flair` subset, selectable with `--synthetic-subdir`). See `crossfeat2d train -h` and `crossfeat2d evaluate -h` for all options.
 
 The models are patient-specific by design, so no pretrained weights are provided; train one per case. A GPU is recommended, since a case with many synthetic images yields hundreds of thousands of patch pairs. Checkpoints saved by the original notebooks load directly.
 
@@ -108,6 +108,7 @@ These are properties of the original experiments, which the package keeps so tha
 - **LightGlue setup.** LightGlue is used with weights trained for DISK descriptors (also 128-d), without retraining, and keypoints are normalised by their extent rather than by image size, as in the notebook.
 - **Cosine matcher.** The notebooks' "one-to-one" filter compared positions in the match list rather than keypoint indices, so it never removed anything. The package's cosine matcher therefore allows several keypoints to match the same target.
 - **Baselines.** `notebooks/baselines/mind_cosine.ipynb` indexes keypoints by their position in the filtered match list, which can mis-pair keypoints after similarity filtering. `superpoint_cosine.ipynb` uses `SuperPoint_Desc` from a locally modified LightGlue that is not available upstream.
+- **Cosine matcher on real US.** `--matcher cosine` detects keypoints independently on both images and uses the ±4 px criterion, like the LightGlue evaluation. The invariance notebook (`ours_cosine_invariance.ipynb`) instead reused the MR keypoints on the synthetic image and required an exact match (margin 0), so the two sets of numbers are not comparable.
 - **Images** are assumed to be 8-bit PNGs.
 - **Verification.** After the refactor, the package was checked with unit tests and an end-to-end run on synthetic images only. The paper's numbers have not been reproduced with it.
 
