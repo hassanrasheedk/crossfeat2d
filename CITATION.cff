@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the paper below."
+title: "crossfeat2d: Learning to Match 2D Keypoints Across Preoperative MR and Intraoperative Ultrasound"
+type: software
+license: MIT
+repository-code: "https://github.com/hassanrasheedk/crossfeat2d"
+authors:
+  - family-names: Rasheed
+    given-names: Hassan
+preferred-citation:
+  type: conference-paper
+  title: "Learning to Match 2D Keypoints Across Preoperative MR and Intraoperative Ultrasound"
+  authors:
+    - family-names: Rasheed
+      given-names: Hassan
+    - family-names: Dorent
+      given-names: Reuben
+    - family-names: Fehrentz
+      given-names: Maximilian
+    - family-names: Kapur
+      given-names: Tina
+    - family-names: Wells
+      given-names: William M.
+      name-suffix: III
+    - family-names: Golby
+      given-names: Alexandra
+    - family-names: Frisken
+      given-names: Sarah
+    - family-names: Schnabel
+      given-names: Julia A.
+    - family-names: Haouchine
+      given-names: Nazim
+  collection-title: "Simplifying Medical Ultrasound (ASMUS 2024)"
+  collection-type: proceedings
+  conference:
+    name: "5th International Workshop on Advances in Simplifying Medical Ultrasound (ASMUS), held with MICCAI 2024"
+  publisher:
+    name: Springer
+  start: 78
+  end: 87
+  year: 2024
+  doi: "10.1007/978-3-031-73647-6_8"
+  identifiers:
+    - type: other
+      value: "arXiv:2409.08169"

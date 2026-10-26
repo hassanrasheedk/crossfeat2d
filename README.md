@@ -1,64 +1,151 @@
-## Learning to Match 2D Keypoints Across Preoperative MR and Intraoperative Ultrasound
+# Learning to Match 2D Keypoints Across Preoperative MR and Intraoperative Ultrasound
 
-This repository contains the implementation of our novel method for matching preoperative Magnetic Resonance (MR) images with intraoperative Ultrasound (US) images. The approach is based on texture-invariant keypoint descriptors, specifically designed to address the challenges of multimodal image matching in medical imaging.
+[![Paper](https://img.shields.io/badge/LNCS-10.1007%2F978--3--031--73647--6__8-blue)](https://doi.org/10.1007/978-3-031-73647-6_8)
+[![arXiv](https://img.shields.io/badge/arXiv-2409.08169-b31b1b)](https://arxiv.org/abs/2409.08169)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![CI](https://github.com/hassanrasheedk/crossfeat2d/actions/workflows/ci.yml/badge.svg)](https://github.com/hassanrasheedk/crossfeat2d/actions/workflows/ci.yml)
 
-### Overview
-Our method introduces a matching-by-synthesis strategy, where intraoperative US images are synthesized from MR images, considering multiple MR modalities and the variability of intraoperative US. The keypoint descriptors are trained in a supervised contrastive manner to be invariant to texture changes and robust against speckle noise.
+Code for our paper at **ASMUS 2024** (5th International Workshop on Advances in Simplifying Medical Ultrasound, held with MICCAI 2024), which received the **ASMUS 2024 Best Presentation Award**.
 
-The following figure illustrates our method overview:
-![Method Overview](overview_full.png)
+[Hassan Rasheed](https://hassanrasheed.com), Reuben Dorent, Maximilian Fehrentz, Tina Kapur, William M. Wells III, Alexandra Golby, Sarah Frisken, Julia A. Schnabel, Nazim Haouchine
 
-### Key Features
-- **Texture-invariant Keypoint Descriptors**: Designed for robust matching of MR and US images.
-- **Matching-by-Synthesis**: Synthesizes US images from MR images to create a diverse training set.
-- **Supervised Contrastive Learning**: Trains descriptors to focus on structural similarity and ignore texture variations.
-- **Patient-specific Training**: Tailors the model to individual patients for improved performance.
-- **Siamese Network Architecture**: Utilizes a Siamese network to learn discriminative descriptors for cross-modality matching.
+## Overview
 
-### Performance
-Our experiments on real patient data demonstrate that our approach significantly outperforms state-of-the-art methods, achieving an average matching precision of 80.35%.
+During brain surgery the brain shifts, so the preoperative MR no longer lines up with the patient. Intraoperative ultrasound (US) shows the current anatomy, but it looks very different from MR, and standard keypoint descriptors find few reliable correspondences between the two.
 
-### Dataset
-We used the ReMIND dataset: Juvekar, Parikshit, et al. "ReMIND: The Brain Resection Multimodal Imaging Database." Scientific Data 11.1 (2024): 494.
+We match keypoints **by synthesis**. From each patient's preoperative MR we generate many synthetic US images, covering several MR contrasts and the variability of intraoperative US. Because each synthetic image is pixel-aligned with its MR slice, every keypoint has a known correspondence. A small Siamese network is then trained **per patient** with a supervised contrastive loss and hard-negative mining, so that its descriptors capture structure and ignore texture and speckle.
 
-### Repository Contents
-- **Code**: Implementation of the keypoint descriptor network, image synthesis pipeline, and matching algorithms.
-- **Training Data**: Scripts for generating synthetic US images from MR images and creating the training dataset.
-- **Evaluation**: Tools for evaluating the performance of the descriptors on real patient data with ground truth.
+On real cases from the [ReMIND](https://doi.org/10.1038/s41597-024-03295-z) dataset with ground truth, the paper reports an average matching precision of **80.35%**, outperforming the state-of-the-art methods compared against. These numbers come from the original notebooks; they have not been re-run since this code was refactored (see [Known limitations](#known-limitations)).
 
-### Usage
-To use this repository, follow these steps:
+![Method overview](docs/method_overview.png)
 
-1. **Clone the repository**:
-    ```sh
-    git clone https://github.com/hassanrasheedk/crossfeat2d.git
-    ```
+## Repository layout
 
-2. **Install the required dependencies**:
-    ```sh
-    pip install -r requirements.txt
-    ```
-
-3. **Train the Model**:
-    Train the keypoint descriptor network using the train notebook.
-
-4. **Evaluate the Model**:
-    Evaluate the trained model on real patient data using the inference notebook.
-
-### Citation
-If you use this code in your research, please cite our paper:
 ```
-@article{Rasheed2024,
-title={Intraoperative MR-Ultrasound Image Matching via Texture-invariant Keypoint Descriptors},
-author={Rasheed, Hassan and Dorent, Reuben and Fehrentz, Maximilian and Kapur, Tina and Wells, William M. and Golby, Alexandra and Frisken, Sarah and Schnabel, Julia and Haouchine, Nazim},
-volume={11},
-number={1},
-pages={494},
-year={2024},
-conference={MICCAI - ASMUS 2024},
-publisher={Springer}
+src/crossfeat2d/      package: data, model, loss, matching, evaluation, CLI
+tests/                CPU smoke tests on synthetic data (no ReMIND needed)
+notebooks/
+  training/           original training notebooks (main method + two ablations)
+  evaluation/         original evaluation notebooks (LightGlue on real US; invariance tests)
+  baselines/          SIFT, SuperPoint and MIND baselines
+docs/                 method figure
+```
+
+The notebooks are the record of the thesis experiments, with outputs stripped and code unchanged. The `crossfeat2d` package is a cleaned-up port of the main training pipeline (`notebooks/training/train_siamese.ipynb`) and the real-US evaluation (`notebooks/evaluation/ours_lightglue.ipynb`), with the same defaults.
+
+## Installation
+
+Python 3.10 or newer. Install PyTorch for your platform first ([instructions](https://pytorch.org/get-started/locally/)), then:
+
+```sh
+git clone https://github.com/hassanrasheedk/crossfeat2d.git
+cd crossfeat2d
+pip install -e .              # package + CLI; pulls LightGlue v0.2 from GitHub
+pip install -e ".[notebooks]" # extra dependencies to open the notebooks
+```
+
+SuperPoint and LightGlue weights are downloaded automatically on first use.
+
+## Data
+
+We use **ReMIND** (Juvekar et al., *Scientific Data* 11, 494, 2024), a public dataset of preoperative MR and intraoperative US from brain tumour resections. Download it from The Cancer Imaging Archive by following the [paper](https://doi.org/10.1038/s41597-024-03295-z), and check its terms of use. No patient data or model weights are stored in this repository.
+
+The code expects each case as 2D PNG slices, with MR and US registered and resampled onto the same slice grid:
+
+```
+data/mr_us/Case067/
+  t2/000.png ...                       T2 MR slices
+  us/000.png ...                       registered intraoperative US slices (evaluation)
+  synthetic_us/000-t2_0.3.png ...      synthetic US for slice 000 (training)
+```
+
+Synthetic images are named `<slice>-<MR contrasts>_<parameter>.png`, for example `000-t2_cet1_flair_0.5.png`; any `NNN-*.png` is used for slice `NNN`.
+
+> [!NOTE]
+> The steps that produce these PNGs, slicing the ReMIND volumes and generating synthetic US, are **not included** in this repository yet. The CLI checks the layout above and explains what is missing.
+
+## Usage
+
+Train a patient-specific descriptor on one case's synthetic US:
+
+```sh
+crossfeat2d train data/mr_us/Case067 --out runs/case067.pth --seed 0
+```
+
+Evaluate it on the same patient's real, registered US. A match counts as correct if it lands within ±4 px of the true location in x and y (on 192 px images); the reported number is the mean per-slice precision:
+
+```sh
+crossfeat2d evaluate data/mr_us/Case067 --weights runs/case067.pth --json runs/case067.json
+```
+
+`--matcher lightglue` (default) matches our descriptors with LightGlue's DISK weights, as in the paper's real-case evaluation; `--matcher cosine` uses nearest neighbours by cosine similarity with a ratio test. `crossfeat2d train --keypoints t2` runs the ablation that detects keypoints on the T2 slice instead of on each synthetic image. See `crossfeat2d train -h` and `crossfeat2d evaluate -h` for all options.
+
+The models are patient-specific by design, so no pretrained weights are provided; train one per case. A GPU is recommended, since a case with many synthetic images yields hundreds of thousands of patch pairs. Checkpoints saved by the original notebooks load directly.
+
+The package can also be used from Python:
+
+```python
+from crossfeat2d import SiameseNetwork
+from crossfeat2d.evaluate import match_slice
+from crossfeat2d.io import load_image
+from crossfeat2d.keypoints import build_superpoint
+from crossfeat2d.matching import build_lightglue
+```
+
+## Development
+
+```sh
+pip install -e ".[dev]"
+ruff check . && ruff format --check .
+pytest
+```
+
+## Known limitations
+
+These are properties of the original experiments, which the package keeps so that it reproduces them:
+
+- **Train/validation split.** Pairs are shuffled and split 80/20 at the pair level, so patches from the same keypoint can appear in both sets and the validation loss is optimistic. The original runs used no fixed seed; the package adds `--seed`.
+- **LightGlue setup.** LightGlue is used with weights trained for DISK descriptors (also 128-d), without retraining, and keypoints are normalised by their extent rather than by image size, as in the notebook.
+- **Cosine matcher.** The notebooks' "one-to-one" filter compared positions in the match list rather than keypoint indices, so it never removed anything. The package's cosine matcher therefore allows several keypoints to match the same target.
+- **Baselines.** `notebooks/baselines/mind_cosine.ipynb` indexes keypoints by their position in the filtered match list, which can mis-pair keypoints after similarity filtering. `superpoint_cosine.ipynb` uses `SuperPoint_Desc` from a locally modified LightGlue that is not available upstream.
+- **Images** are assumed to be 8-bit PNGs.
+- **Verification.** After the refactor, the package was checked with unit tests and an end-to-end run on synthetic images only. The paper's numbers have not been reproduced with it.
+
+## Citation
+
+If you use this code, please cite:
+
+```bibtex
+@inproceedings{rasheed2024learning,
+  title     = {Learning to Match 2D Keypoints Across Preoperative MR and Intraoperative Ultrasound},
+  author    = {Rasheed, Hassan and Dorent, Reuben and Fehrentz, Maximilian and Kapur, Tina and Wells III, William M. and Golby, Alexandra and Frisken, Sarah and Schnabel, Julia A. and Haouchine, Nazim},
+  booktitle = {Simplifying Medical Ultrasound (ASMUS 2024)},
+  series    = {Lecture Notes in Computer Science},
+  pages     = {78--87},
+  publisher = {Springer},
+  year      = {2024},
+  doi       = {10.1007/978-3-031-73647-6_8}
 }
 ```
 
-### License
-This project is licensed under the [MIT License](LICENSE).
+and the ReMIND dataset:
+
+```bibtex
+@article{juvekar2024remind,
+  title   = {{ReMIND}: The Brain Resection Multimodal Imaging Database},
+  author  = {Juvekar, Parikshit and others},
+  journal = {Scientific Data},
+  volume  = {11},
+  pages   = {494},
+  year    = {2024},
+  doi     = {10.1038/s41597-024-03295-z}
+}
+```
+
+## Acknowledgements
+
+This work was my master's thesis at the Technical University of Munich (TUM), carried out at Brigham and Women's Hospital / Harvard Medical School. It builds on [LightGlue and SuperPoint](https://github.com/cvg/LightGlue) (Apache-2.0).
+
+## License
+
+Code: [MIT](LICENSE). The ReMIND data and the LightGlue/SuperPoint weights have their own terms.
